@@ -1,0 +1,11 @@
+eqn=ClassBdetuning();
+eqn.options.custom.Init_E='random';
+eqn.options.custom.Init_N='steady';
+net=RandomNetwork(5,8,eqn);
+net.randomize('M',1);
+net.randomize('pump',1);
+net.randomize('loss',1);
+%Visual.showNodes(net);
+timelimit=10000;
+sln=Solver.calctime(net,timelimit);
+Visual.graphTimeAmp(sln);

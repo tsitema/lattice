@@ -87,14 +87,17 @@ classdef Visual
                 %ok
             end
             %******parameters END****
-            
-            pl=Visual.showNodes(soln.lattice);
+            if nargin>4
+                pl=Visual.showNodes(soln.lattice,plotHandle);
+            else
+                pl=Visual.showNodes(soln.lattice,plotHandle);
+            end
             field=soln.fields(:,:,sfield);
             %absolute square
             field=abs(field).^2;
             %interpolate fields
             if ntime>1
-                timesteps=tstart:tend/(ntime-1):tend;
+                timesteps=tstart:(tend-tstart)/(ntime-1):tend;
             else
                 timesteps=tstart;
             end
@@ -123,6 +126,7 @@ classdef Visual
                     highlight(pl,soln.lattice(j).ID,'NodeColor',cmap(curtime(j),:));
                 end
                 xlabel(strcat('t= ',num2str(timesteps(i)),'  max E= ', num2str(maxv(i))));
+                colorbar()
                 pause(pausetime)
             end
         end

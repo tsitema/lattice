@@ -165,10 +165,10 @@ function [egs,lattice]=calculate(pump1,M,loss,alpha)
             loss=pump1;
             pump2=0;
         end
-        timelimit=500;
+        timelimit=1000;
         %% CREATE EQUATIONS********************************************
         J=1;%normalize wrt J
-        tr=100;%should be larger than 1
+        tr=0.1;%should be larger than 1
         sigma=24;
         %threshold=(1/tr)*(1/(tph*sigma)+1);
         eqna=ClassBdetuning();
@@ -319,7 +319,7 @@ function calcbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 data=get(handles.figure1,'UserData');
-data.soln=Solver.calctime(data.lattice,1000);
+data.soln=Solver.calctime(data.lattice,2000);
 set(handles.figure1,'CurrentAxes',handles.Mode_profile);
 Visual.graphTimeAmp(data.soln);
 

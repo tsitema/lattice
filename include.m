@@ -1,6 +1,6 @@
 %clear all;
-addpath('Classes') ;
-addpath('Equations');
-addpath('Networks');
-addpath('Static');
-addpath('Examples/optimize_pump');
+addpath('API/Classes') ;
+addpath('API/Equations');
+addpath('API/Networks');
+addpath('API/Static');
+addpath('API/Examples/optimize_pump');

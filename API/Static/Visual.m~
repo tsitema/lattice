@@ -64,11 +64,8 @@ classdef Visual
                 for i=1:length(eigensystem.nodes)
                     highlight(pl,eigensystem.nodes(i).ID,'NodeColor',cmap(scaled(i),:));
                 end
-                
-               %text(0,0,strcat('t= ',num2str(n),'eig= ',num2str(eigensystem.values(n))));
-               dim = [.2 .5 .3 .3];
-               str=strcat('t= ',num2str(n),'eig= ',num2str(eigensystem.values(n)));
-               annotation('textbox',dim,'String',str,'FitBoxToText','on');
+               %TEXT 
+               text(plotHandle,0,0,strcat('t= ',num2str(n),'eig= ',num2str(eigensystem.values(n))));
             else
                 warning('plotEigen: invalid Eigenvector index');
             end
@@ -83,18 +80,22 @@ classdef Visual
                 tstart=0;
                 tend=soln.time(end);
                 ntime=200;%number of time steps
+                plotHandle=gca;
             elseif nargin>=3
                 %ok
             end
             %******parameters END****
-            
-            pl=Visual.showNodes(soln.lattice);
+            if nargin>4
+                pl=Visual.showNodes(soln.lattice,plotHandle);
+            else
+                pl=Visual.showNodes(soln.lattice,plotHandle);
+            end
             field=soln.fields(:,:,sfield);
             %absolute square
             field=abs(field).^2;
             %interpolate fields
             if ntime>1
-                timesteps=tstart:tend/(ntime-1):tend;
+                timesteps=tstart:(tend-tstart)/(ntime-1):tend;
             else
                 timesteps=tstart;
             end
@@ -122,7 +123,8 @@ classdef Visual
                 for j=1:length(soln.lattice)
                     highlight(pl,soln.lattice(j).ID,'NodeColor',cmap(curtime(j),:));
                 end
-                xlabel(strcat('t= ',num2str(timesteps(i)),'  max E= ', num2str(maxv(i))));
+                xlabel(plotHandle,strcat('t= ',num2str(timesteps(i)),'  max E= ', num2str(maxv(i))));
+                colorbar(plotHandle)
                 pause(pausetime)
             end
         end
@@ -134,11 +136,17 @@ classdef Visual
             field=abs(field).^2;
             plot(soln.time,field);
         end
-        function plotfft(soln)
+        function plotfft(soln,snode,plotHandle)
             %*****parameters**********************
             ntime=1000;%time steps
+            %FFT is calculated for time interval steady*tmax:tmax
             steady=0.5;%choose between 0-1 to specify steady state time
-            snode=0;%selected node, if==0 calculate average of nodes
+            if nargin==1
+                snode=0;%selected node, if==0 calculate all nodes
+                plothandle=gca;
+            elseif nargin==2
+                plothandle=gca;
+            end
             sfield=1;%selected field
             %*****parameters END******************
             %interpolate
@@ -146,7 +154,7 @@ classdef Visual
             timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
             field=soln.fields(:,:,sfield);
             if snode==0
-                field=sum(field,2);%sum through nodes
+                %field=sum(field,2);%sum through nodes
             else
                 field=field(:,snode);
             end
@@ -157,11 +165,18 @@ classdef Visual
             end
             %fft of the field intensity
             fft0=fft(abs(fieldint).^2);
-            fft0=abs(fft0);
+            fft0=abs(fftshift(fft0));
             [~,freq]=max(fft0);
             amp=mean(abs(field).^2);
             error=(sum(fft0)-amp)/amp;
-            plot(fft0);
+            [xmax,ymax]=size(fft0);
+            markersize=5;
+            Fs=ntime/tmax;
+            freqrange= Fs*[-ntime/2:ntime/2];
+            %repmat(1:xmax,[1 ymax])
+            pl=scatter(plotHandle,freqrange, log(fft0(:)),markersize,...
+            'r','filled','MarkerFaceAlpha',0.05);
+           % pl.MarkerFaceAlpha = 0.2; 
         end
         function saveVideo(soln)
             %******parameters********

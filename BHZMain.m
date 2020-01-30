@@ -14,18 +14,28 @@ ny=10;
 %% Ker nonlinearity 
 eqn=KerrNonlinearity(2*W,beta);%KerrNonlinearity(Energy,nonlinearity)
 eqn.options.custom.Init_psi='random';
-% BHZ lattice creates links (hopping terms) between orbitals
+%% BHZ lattice creates links (hopping terms) between orbitals
 lattice=BHZ(eqn,nx,ny,A,B);
-%Visual.showNodes(lattice);
+
+%% CALCULATIONS
 %calculate eigenvalues and eigenvectors
 egs=Solver.calceig(lattice);
-%plot eigenvalues
-scatter(real(egs.values),imag(egs.values))
 
 %calculate time dependent field
-sln=Solver.calctime(lattice,timelimit);
+soln=Solver.calctime(lattice,timelimit);
 
+%% PLOTS
+%plot eigenvalues
+scatter(real(egs.values),imag(egs.values))
+figure
 %show an animation of time evolution
-
+Visual.graphTimeAmp(soln)
+figure
+%show plot
+Visual.showNodes(lattice);
+figure
+%plot spectrum
+Visual.plotfft(soln);
+figure
 %plot time dependent fields
-Visual.plotTimeAmp(sln)
+Visual.plotTimeAmp(soln)

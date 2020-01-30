@@ -146,8 +146,10 @@ classdef Visual
             steady=0.5;%choose between 0-1 to specify steady state time
             if nargin==1
                 snode=0;%selected node, if==0 calculate all nodes
+                figure;
                 plothandle=gca;
             elseif nargin==2
+                figure;
                 plothandle=gca;
             end
             sfield=1;%selected field
@@ -185,12 +187,22 @@ classdef Visual
             fft0=fftshift(sortrows(fft0',1)');
             ydata=(fft0(:));
             cmap=jet(nn);
+            
+            try % A workaround for standalone plot
             cla(plotHandle,'reset');
             hold(plotHandle,'on');
             for j=1:nn
                 pl=plot(plotHandle,f,fft0(:,j),'Color',cmap(j,:));
             end
             hold(plotHandle,'off');
+            catch
+                hold on;
+                cla
+                for j=1:nn
+                    plot(f,fft0(:,j),'Color',cmap(j,:));
+                end
+                hold off
+            end
 %              pl=scatter(plotHandle,xdata, ydata,markersize,...
 %              'r','filled','MarkerFaceAlpha',0.05,'defaultAxesColorOrder',cmap);
         end

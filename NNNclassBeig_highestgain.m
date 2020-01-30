@@ -1,15 +1,15 @@
 include
 clear
-psweep= (0.1:0.05:4); %pump
-msweep= 0:0.05:4; %MMMMM
+psweep= 2;%(0.02:0.02:3); %pump
+msweep= 0:0.02:4; %MMMMM
 asweep=0;%alpha
 edgepump=1;
 timelimit=1000;
-checkfor='highestgain';
-%checkfor='steady';
+%checkfor='highestgain';
+checkfor='steady';
 %checkfor='freq';
 %checkfor='edginess';
-enableplot=false;
+enableplot=true;
 runInSerial = enableplot;% disable/enable parallel
 repeat=1;
 resultav=zeros(length(psweep),length(msweep));
@@ -38,7 +38,7 @@ for cnt=1:repeat
                 M=msweep(j);
                 if edgepump==1
                     pump2=pump1;
-                    loss=pump1*0.05;%(44/224);
+                    loss=0;%pump1*0.05;%(44/224);
                 else
                     pump2=0;
                     loss=pump1;

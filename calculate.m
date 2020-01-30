@@ -1,7 +1,7 @@
-function [egs,lattice]=calculate(pump1,M,loss,alpha)
+function [egs,lattice]=calculate(pump1,M,loss,alpha,tr,edgepump,bulkedgeratio)
             %% PARAMETERS*************************************************
             %% PARAMETERS*************************************************
-            edgepump=1;
+            %edgepump=1;
             %pump1=S.pump1;
             if edgepump==1
                 pump2=pump1;
@@ -13,7 +13,7 @@ function [egs,lattice]=calculate(pump1,M,loss,alpha)
             timelimit=1000;
             %% CREATE EQUATIONS********************************************
             J=1;%normalize wrt J
-            tr=0.1;%should be larger than 1
+            %tr=0.1;%should be larger than 1
             sigma=24;
             %threshold=(1/tr)*(1/(tph*sigma)+1);
             eqna=ClassBdetuning();
@@ -43,6 +43,10 @@ function [egs,lattice]=calculate(pump1,M,loss,alpha)
             %option.custom.BC='periodic1';
             %option.custom.pump='edge';%pump edges only
             lattice=NNN(eqna,eqnb,12,12,option);
+            %Bulk-Edge separate pumping option
+            if edgepump==1
+            lattice.separatepumprate=pump1*bulkedgeratio;
+            end
             lattice.J=J;
             %% SOLVE********************************************************
             egs=Solver.calceig(lattice);

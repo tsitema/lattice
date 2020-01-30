@@ -29,5 +29,6 @@ classdef Networkname < Lattice
             end
             %o.nodes=o.buildNodes();
         end
+    end
         %% SET METHODS
 end

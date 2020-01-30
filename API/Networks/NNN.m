@@ -7,6 +7,7 @@ classdef NNN < Lattice
         eqnb;
         J=1;%coupling strength
         phi=pi;
+        separatepumprate=0;%To pump the bulk separately.
         %M=0;%detuning is a property of the internal dynamics
         nodes=Node.empty();
         options;%currently selected options
@@ -28,18 +29,20 @@ classdef NNN < Lattice
     methods
         %% CONSTRUCTOR
         function o=NNN(eqna,eqnb,nx,ny,opt)
-            if nargin==5
+            if nargin>4
                 o.options=opt;
-                o.eqna=eqna;
-                o.eqnb=eqnb;
-                o.nx=nx;
-                o.ny=ny;
             else %if not specified, default options
                 o.options=o.option_list;
             end
+            o.eqna=eqna;
+            o.eqnb=eqnb;
+            o.nx=nx;
+            o.ny=ny;
             %o.nodes=o.buildNodes();
         end
         %% SET METHODS
+        % TODO: Now we can not initialize the lattice
+        % without setting J. We have to fix this.
         function o=set.J(o,J)
             %I J is not the default value,
             %we have to rebuild the nodes.
@@ -177,7 +180,8 @@ classdef NNN < Lattice
             %WE HAVE TO CALL THIS, AFTER ALL ATTACHED
             NNN.setPosition(o.nodes);
             %% ***********CUSTOM PUMP*************************************
-            %pump only the edges
+            %pump only the edges. pump=0 except for edge nodes. Also edge
+            %nodes are marked with label 'c'.
             if strcmp(o.options.custom.pump,'edge')...
                     &&strcmp(o.options.custom.edges,'baklava')
                 for yi=1:NY
@@ -186,13 +190,13 @@ classdef NNN < Lattice
                             o.nodes(xi,yi,A).type='c';
                             o.nodes(xi,yi,A).type='c';
                         else
-                            o.nodes(xi,yi,A).eqn.par.pump=0;
+                            o.nodes(xi,yi,A).eqn.par.pump=o.separatepumprate;
                         end
                         if xi==NX||xi==1
                             o.nodes(xi,yi,B).type='c';
                             o.nodes(xi,yi,B).type='c';
                         else
-                            o.nodes(xi,yi,B).eqn.par.pump=0;
+                            o.nodes(xi,yi,B).eqn.par.pump=o.separatepumprate;
                         end
                     end
                 end
@@ -207,7 +211,7 @@ classdef NNN < Lattice
                             o.nodes(xi,yi,B).type='c';
                             o.nodes(xi,yi,B).type='c';
                         else
-                            o.nodes(xi,yi,B).eqn.par.pump=0;
+                            o.nodes(xi,yi,B).eqn.par.pump=o.separatepumprate;
                         end
                     end
                 end
@@ -222,13 +226,13 @@ classdef NNN < Lattice
                             o.nodes(xi,yi,B).type='c';
                             o.nodes(xi,yi,B).type='c';
                         else
-                            o.nodes(xi,yi,B).eqn.par.pump=0;
+                            o.nodes(xi,yi,B).eqn.par.pump=o.separatepumprate;
                         end
                         if xi==NX+1||xi==1
                             o.nodes(xi,yi,B).type='c';
                             o.nodes(xi,yi,B).type='c';
                         else
-                            o.nodes(xi,yi,B).eqn.par.pump=0;
+                            o.nodes(xi,yi,B).eqn.par.pump=o.separatepumprate;
                         end
                     end
                 end

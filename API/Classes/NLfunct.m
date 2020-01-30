@@ -13,6 +13,7 @@ classdef NLfunct
         output;
     end
     methods
+        %props is a struct that contains array of properties specific to 
         function obj=NLfunct(props,link,eqn,input,output)
             if nargin>2
                 obj.props=props;

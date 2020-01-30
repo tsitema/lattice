@@ -128,17 +128,20 @@ classdef Visual
                 pause(pausetime)
             end
         end
-        function plotTimeAmp(soln)
-            pl=Visual.showNodes(soln.lattice);
+        function plotTimeAmp(soln,plotHandle)
+            if nargin==1
+                plotHandle=gca;
+            end
+            %pl=Visual.showNodes(soln.lattice);
             sfield=1;
             field=soln.fields(:,:,sfield);
             %absolute square
             field=abs(field).^2;
-            plot(soln.time,field);
+            plot(plotHandle,soln.time,field);
         end
-        function plotfft(soln,snode,plotHandle)
+        function plotfft(soln,snode,plotHandle,options)
             %*****parameters**********************
-            ntime=1000;%time steps
+            ntime=1001;%time steps
             %FFT is calculated for time interval steady*tmax:tmax
             steady=0.5;%choose between 0-1 to specify steady state time
             if nargin==1
@@ -151,6 +154,7 @@ classdef Visual
             %*****parameters END******************
             %interpolate
             tmax=soln.time(end);
+            fs=tmax*steady/ntime;%sampling frequency
             timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
             field=soln.fields(:,:,sfield);
             if snode==0
@@ -164,19 +168,31 @@ classdef Visual
                 fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
             end
             %fft of the field intensity
-            fft0=fft(abs(fieldint).^2);
-            fft0=abs(fftshift(fft0));
+            fft0=fft(fieldint);
+            fft0=abs((fft0));
             [~,freq]=max(fft0);
             amp=mean(abs(field).^2);
             error=(sum(fft0)-amp)/amp;
             [xmax,ymax]=size(fft0);
             markersize=5;
-            Fs=ntime/tmax;
+            Fs=1/((1-steady)*tmax/(ntime-1));
             freqrange= Fs*[-ntime/2:(ntime/2-1)];
+            f = Fs/2*linspace(0,1,ntime/2+1);
+            f=[-flip(f(2:end)) f];
             %repmat(1:xmax,[1 ymax])
-            pl=scatter(plotHandle,repmat(freqrange,[1 ymax]), log(fft0(:)),markersize,...
-            'r','filled','MarkerFaceAlpha',0.05);
-           % pl.MarkerFaceAlpha = 0.2; 
+            xdata=repmat(freqrange,[1 ymax]);
+            %sort fft with respect to the first row
+            fft0=fftshift(sortrows(fft0',1)');
+            ydata=(fft0(:));
+            cmap=jet(nn);
+            cla(plotHandle,'reset');
+            hold(plotHandle,'on');
+            for j=1:nn
+                pl=plot(plotHandle,f,fft0(:,j),'Color',cmap(j,:));
+            end
+            hold(plotHandle,'off');
+%              pl=scatter(plotHandle,xdata, ydata,markersize,...
+%              'r','filled','MarkerFaceAlpha',0.05,'defaultAxesColorOrder',cmap);
         end
         function saveVideo(soln)
             %******parameters********

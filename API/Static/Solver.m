@@ -20,8 +20,7 @@ classdef Solver
                 di=(1:sDOF)+(i-1)*sDOF;%related region of the node in Hamiltonian
                 %set the diagonal terms
                 H(di,di)=snode.eqn.getlinear;
-                %Now, the links. We assume links only for the first internal 
-                %equation, i.e. the electric field
+                %Now, the links. 
                 for j=1:length(snode.linklist)
                     slink=snode.linklist(j);%selected connected link
                     sID=slink.node.ID;%ID of the connected node
@@ -33,7 +32,6 @@ classdef Solver
                 end
             end
         end
-       
        %calculates the link matrix. similar to the linear hamiltonian,
        %except it only contains the link elements.
         function H=calclinks(nodes)
@@ -52,6 +50,7 @@ classdef Solver
                 %equation, i.e. the electric field
                 for j=1:length(snode.linklist)
                     slink=snode.linklist(j);%selected connected link
+                    nfield=length(slink.str);%number of fields connected
                     sID=slink.node.ID;%ID of the connected node
                     hrow=(sDOF*(snode.ID-1)+1);%row is ID of the 1st
                     hcol=(sDOF*(sID-1)+1);%column of the connected
@@ -109,7 +108,7 @@ classdef Solver
                 warning('calctime: not a Node or Lattice')
             end
             props=Eqn.getParArray(nodes);
-            %initial state-
+            %initial state
             %TODO: MAKE IT CLASS INDEPENDENT
             eq=nodes(1).eqn;
             %initial values each column is another field
@@ -125,8 +124,7 @@ classdef Solver
             sln.fields=y;
             sln.time=t;
         end
-        %evaluates ode system, but with small chunks, and saves it to hard
-        %drive. 
+        %evaluate ode system, but with small chunks, and save to disc
         function sln=calctime2(nodes,timelimit)
             timestep=10;
             interp_step=0.1;

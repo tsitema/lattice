@@ -35,6 +35,9 @@ classdef TightBinding <Eqn
             %init.psi=rand()*0.01;
             init.psi=0.001;
         end
+        function er=getlinear(o)                
+                er= (2.*cot(o.par.phi/2)+o.par.M+1i.*o.par.g);
+        end
     end
     methods (Static)
         function y=calc(x,p)

@@ -9,8 +9,8 @@ beta=0.05;
 %calculation time limit
 timelimit=100;
 %lattice size
-nx=10;
-ny=10;
+nx=5;
+ny=5;
 %% Ker nonlinearity 
 eqn=KerrNonlinearity(2*W,beta);%KerrNonlinearity(Energy,nonlinearity)
 eqn.options.custom.Init_psi='random';

@@ -9,7 +9,7 @@ classdef NNN < Lattice
         phi=pi;
         separatepumprate=0;%To pump the bulk separately.
         %M=0;%detuning is a property of the internal dynamics
-        nodes=Node.empty();
+        %nodes=Node.empty();
         options;%currently selected options
     end
     
@@ -22,7 +22,8 @@ classdef NNN < Lattice
         %default option object
         option_list=Options('edges',{'default','baklava','b'},...
             'pump',{'default','edge'},...
-            'BC',{'default','periodic1','periodic2'});
+            'BC',{'default','periodic1','periodic2','periodic3'});
+        %periodic3 means periodic in x, but a-terminated
     end
     
     %% METHODS
@@ -168,7 +169,24 @@ classdef NNN < Lattice
                         end
                     end
                 end
-            elseif strcmp(o.options.custom.edges,'baklava')
+                elseif strcmp(o.options.custom.BC,'periodic3')
+                    %********b-type edge with periodic BC*****************
+                    for yi=1:NY
+                        %add one last b to end of x diagonal
+                        Node.attach(o.nodes(1,yi,B),o.nodes(NX,yi,A),Hab);
+                        Node.attach(o.nodes(NX,yi,B),o.nodes(rem(xi,NX)+1,yi,B),Ha);
+                        if yi<NY
+                            Node.attach(o.nodes(NX,yi,A),o.nodes(1,yi+1,B),Hab);
+                        end
+                    end
+                    for xi=1:NX
+                        Node.attach(o.nodes(xi,1,B),o.nodes(rem(xi,NX)+1,1,B),Ha);
+                        Node.attach(o.nodes(xi,1,B),o.nodes(xi,NY,A),Ha);
+                        if xi<NX
+                            Node.attach(o.nodes(xi+1,1,B),o.nodes(xi,NY,A),Ha);
+                        end
+                    end
+                elseif strcmp(o.options.custom.edges,'baklava')
                 %delete some nodes
                 for xi=1:NX
                     o.deleteNode(o.nodes(xi,1,B));

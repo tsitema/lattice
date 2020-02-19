@@ -29,6 +29,38 @@ classdef Analyze
             amp=mean(abs(field).^2);
             error=(sum(fft0)-amp)/amp;
         end
+        
+        function [PN]=getfreqPN(soln)
+            %returns the participation number of the fft spectrum
+            %of a given solution starting from 0.5*timelimit
+            %Shows how much the spectrum is spread. 
+            %*****parameters**********************
+            ntime=2000;%time steps
+            steady=0.5;%choose between 0-1 to specify steady state time
+            snode=0;%selected node, if==0 calculate average of nodes
+            sfield=1;%selected field
+            %*****parameters END******************
+            %interpolate
+            tmax=soln.time(end);
+            timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
+            field=soln.fields(:,:,sfield);
+            if snode==0
+                field=sum(field,2);%sum through nodes
+            else
+                field=field(:,snode);
+            end
+            [~,nn]=size(field);
+            fieldint=zeros(ntime,nn);  
+            for i=1:nn
+                fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
+            end
+            %fft of the field intensity
+            fft0=abs(fft(fieldint));
+            %normalize spectrum
+            fft0=fft0.^2./sum(abs(fft0.^2));
+            PN=sum(abs(fft0).^2);%larger means more localized
+        end
+        
         function merit=objfun(soln)
             [amp,~,error]=Classify.getfrequency(soln);
             merit=error/(amp);

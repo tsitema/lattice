@@ -7,16 +7,18 @@ A=1.5;
 %nonlinearity
 beta=0.05;
 %calculation time limit
-timelimit=100;
+timelimit=10;
 %lattice size
-nx=5;
-ny=5;
+nx=10;
+ny=10;
 %% Ker nonlinearity 
 eqn=KerrNonlinearity(2*W,beta);%KerrNonlinearity(Energy,nonlinearity)
 eqn.options.custom.Init_psi='random';
 %% BHZ lattice creates links (hopping terms) between orbitals
-lattice=BHZ(eqn,nx,ny,A,B);
-
+opt=lattice.option_list;
+opt.custom.initialpulse='leftedge';
+opt.custom.pulseintensity=1;
+lattice=BHZ(eqn,nx,ny,A,B,opt);
 %% CALCULATIONS
 %calculate eigenvalues and eigenvectors
 egs=Solver.calceig(lattice);

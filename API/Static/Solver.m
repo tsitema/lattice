@@ -62,6 +62,14 @@ classdef Solver
         end
        %calculates the adjacency matrix
        function A=calcadj(nodes)
+            if isa(nodes,'Node')==1
+                nodes=nodes(:);%flatten
+            elseif isa(nodes,'Lattice')==1
+                par=nodes.par;
+                nodes=nodes.nodes(:);
+            else
+                warning('calceig: not a Node or Lattice')
+            end
             nodes=nodes(:);%flatten
             N=length(nodes);
             A=sparse(N,N);
@@ -73,7 +81,22 @@ classdef Solver
                     hrow=snode.ID;%row is ID of the 1st
                     hcol=sID;%column of the connected
                     if sID>0 %check for unlinked
-                        A(hrow,hcol)=slink.str;
+                        if isnumeric(slink.str)
+                            %TODO: fix the warning here
+                            A(hrow,hcol)=slink.str;
+                        else
+                            %if str is a symbol, it is stored in the
+                            %lattice.par
+                            if exist('par','var')
+                                if isfield(par,slink.str)
+                                    A(hrow,hcol)=par.slink.str;
+                                else
+                                    error(strcat('No such parameter: ',slink.(str)));
+                                end
+                            else
+                                error('Lattice object has no parameters');
+                            end
+                        end
                     end
                 end
             end
@@ -100,18 +123,23 @@ classdef Solver
         %Calculates the time evolution of the fields.
         %For now, we assume all nodes are the same class.
         function sln=calctime(nodes,timelimit)
-            if isa(nodes,'Node')==1
-                nodes=nodes(:);%flatten
-            elseif isa(nodes,'Lattice')==1
-                nodes=nodes.nodes(:);
-            else
-                warning('calctime: not a Node or Lattice')
-            end
+%             if isa(nodes,'Node')==1
+%                 nodes=nodes(:);%flatten
+%             elseif isa(nodes,'Lattice')==1
+%                 nodes=nodes.nodes(:);
+%             else
+%                 warning('calctime: not a Node or Lattice')
+%             end
             props=Eqn.getParArray(nodes);
             %initial state
             %TODO: MAKE IT CLASS INDEPENDENT
-            eq=nodes(1).eqn;
-            %initial values each column is another field
+            if isa(nodes,'Node')==1
+                eq=nodes(1).eqn;
+            elseif isa(nodes,'Lattice')==1
+                n1=nodes.nodes(1);
+                eq=n1.eqn;
+            end
+            %initial values. each column is another field
             init=Eqn.getInit(nodes);
             link=Solver.calcadj(nodes);
             nlfunct=NLfunct(props,link,eq);

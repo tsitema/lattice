@@ -1,6 +1,7 @@
 classdef (Abstract) Lattice <handle
-    properties (Abstract)
-        nodes;
+    properties 
+        nodes=Node.empty();
+        par;%struct of lattice specific parameters, e.g. coupling strengths
     end
     methods
         %detach a node from a lattice and remove it.

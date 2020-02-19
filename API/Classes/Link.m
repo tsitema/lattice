@@ -10,5 +10,8 @@ classdef Link
             obj.node=node;
             obj.str=str;
         end
+        function str=get.str(o)
+            str=o.str;
+        end
     end
 end

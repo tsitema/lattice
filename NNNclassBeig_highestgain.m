@@ -1,15 +1,15 @@
 include
 clear
-psweep= 2;%(0.02:0.02:3); %pump
-msweep= 0:0.02:4; %MMMMM
+psweep=(0.02:0.05:3); %pump
+msweep= 0:0.05:4; %MMMMM
 asweep=0;%alpha
 edgepump=1;
 timelimit=1000;
 %checkfor='highestgain';
-checkfor='steady';
-%checkfor='freq';
+%checkfor='steady';
+checkfor='freq';
 %checkfor='edginess';
-enableplot=true;
+enableplot=false;
 runInSerial = enableplot;% disable/enable parallel
 repeat=1;
 resultav=zeros(length(psweep),length(msweep));
@@ -30,15 +30,15 @@ for cnt=1:repeat
         end
         for i=1:length(psweep)
             fprintf('%d of %d\n',i,length(psweep));
-           parfor (j=1:length(msweep),parforArg)
-         %   for (j=1:length(msweep))
+          parfor (j=1:length(msweep),parforArg)
+    %         for (j=1:length(msweep))
                 pump1=psweep(i);
                 %% PARAMETERS*************************************************
                 %pump1=S.pump1;
                 M=msweep(j);
                 if edgepump==1
                     pump2=pump1;
-                    loss=0;%pump1*0.05;%(44/224);
+                    loss=0.1;%pump1*0.05;%(44/224);
                 else
                     pump2=0;
                     loss=pump1;
@@ -47,7 +47,7 @@ for cnt=1:repeat
                 %tph=S.tph;
                 %% CREATE EQUATIONS********************************************
                 J=1;%normalize wrt J
-                tr=100;%should be larger than 1
+                tr=0.1;%should be larger than 1
                 sigma=24;
                 %threshold=(1/tr)*(1/(tph*sigma)+1);
                 eqna=ClassBdetuning();
@@ -74,8 +74,8 @@ for cnt=1:repeat
                 if edgepump==1
                     option.custom.pump='edge'%pump edges only
                 end
-                %option.custom.BC='periodic1';
-                %option.custom.pump='edge';%pump edges only
+                option.custom.BC='periodic1';
+                option.custom.pump='edge';%pump edges only
                 lattice=NNN(eqna,eqnb,12,12,option);
                 lattice.J=J;
                 %% SOLVE********************************************************
@@ -96,7 +96,10 @@ for cnt=1:repeat
                     [re,result(i,j),~]=Analyze.checksteady(soln);
                 elseif strcmp(checkfor,'freq')
                     soln=Solver.calctime(lattice,timelimit);
-                    [amp,result(i,j),error]=Analyze.getfrequency(soln)
+                    %[amp,result(i,j),error]=Analyze.getfrequency(soln)
+                    result(i,j)=Analyze.getfreqPN(soln);
+                    fprintf('pump= %d M= %d',i,j);
+                    Visual.graphTimeAmp(soln);
                     result(i,j)
                 elseif strcmp(checkfor,'edginess')
                     soln=Solver.calctime(lattice,timelimit);
@@ -105,7 +108,7 @@ for cnt=1:repeat
                     Visual.graphTimeAmp(soln);
                     end
                 end
-                
+         
             end
         end
         if strcmp(checkfor,'steady')
@@ -134,7 +137,7 @@ for cnt=1:repeat
         %save data
         
     elseif strcmp(checkfor,'steady')
-        surf(msweep,psweep,(abs(result)))
+        surf(msweep,psweep,(log(abs(result))))
         xlabel('M')
         ylabel('\gamma')
         shading interp

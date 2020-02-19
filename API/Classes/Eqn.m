@@ -12,7 +12,7 @@ classdef (Abstract) Eqn
          fields;
     end
     methods (Static)
-        %so, you give this function an array o Eqn objects, and it will
+        %you give this function an array o Eqn objects, and it will
         %return you a struct that contains the arrays of parameters.
         %but all elements of the equation array should be in the same
         %class.

@@ -1,21 +1,24 @@
 classdef BHZ < Lattice
     %% PROPERTIES
     properties
-        nodes=Node.empty();
+        %nodes=Node.empty();
         options;%currently selected options
         eqn;%internal dynamics equation of orbitals
         nx;
         ny;
         JA=1;%coupling strength between orbitals a and b
         JB=1;%coupling strength between the same orbital type
+        
     end
     %% CONSTANTS
     properties (Constant)
         %named constants
         a=1;%orbital A
         b=2;%orbital B
+        leftedge=3;%label for the left edge. we will apply custom initial conditions on these
         %default option object
-        option_list=Options();
+        option_list=Options('initialpulse',{'none','leftedge'}...
+            ,'pulseintensity',0);
     end
     
     %% METHODS
@@ -85,6 +88,16 @@ classdef BHZ < Lattice
                     end
                 end
             end
+            %If initial pulse is defined, we modify the lattice
+            if  strcmp(o.options.custom.initialpulse,'leftedge')
+                for yi=1:NY
+                    %turn off random initial conditions for this node
+                    o.nodes(1,yi,A).eqn.options.custom.Init_psi='default';
+                    o.nodes(1,yi,A).eqn.initial.psi=o.options.custom.pulseintensity;%assign the new value
+                    o.nodes(1,yi,A).type='c';
+                end
+            end
+            
             %% TODO the code below (init position and cleanup) must be called after building the lattice
             % otherwise plots do not work properly. Either fix plots or move this code to the Lattice
             % superclass.
@@ -107,6 +120,9 @@ classdef BHZ < Lattice
                             o.nodes(i,j,k).x=i+0.3;
                             o.nodes(i,j,k).y=j+0.3;
                         elseif strcmp(o.nodes(i,j,k).type,'a')
+                            o.nodes(i,j,k).x=i;
+                            o.nodes(i,j,k).y=j;
+                        elseif strcmp(o.nodes(i,j,k).type,'c')
                             o.nodes(i,j,k).x=i;
                             o.nodes(i,j,k).y=j;
                         else

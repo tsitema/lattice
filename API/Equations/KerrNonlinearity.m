@@ -4,22 +4,24 @@ classdef KerrNonlinearity <Eqn
         par=struct('W',0,'beta',0);
         fields=struct('psi',0);
         initial=struct('psi',0);
+        random_intensity=1e-3;%intensity of the initial random field
         options;
     end
     properties (Constant)
         DOF=1;%internal degrees of freedom for each node.
-        option_list=Options('Init_psi',{'default','random'});
+        option_list=Options('Init_psi',{'default','random'}); %WHAT IT MEANS DEFOLT? DOES IT MEAN EQUAL AMPLITUDES? HOW IT WOULD BE FOR PLANE WAVE?
     end
     methods
-        function obj=KerrNonlinearity(W,beta)
-            obj.par.W=W;
-            obj.par.beta=beta;
-            %obj.eqn=@(x) (2*obj.phi+obj.M)*x*(-1i);
+        function o=KerrNonlinearity(W,beta)
+            o.par.W=W;
+            o.par.beta=beta;
+            o.options=o.option_list;
         end
         function init=get.initial(o)
             init=o.initial;
-            %init.psi=rand()*0.01;
-            init.psi=0.001;
+            if strcmp(o.options.custom.Init_psi,'random')
+            init.psi=rand()*o.random_intensity;  
+            end
         end
         function er=getlinear(o)                
                 er= o.par.W;
@@ -27,7 +29,8 @@ classdef KerrNonlinearity <Eqn
     end
     methods (Static)
         function y=calc(x,p)
-            y=(p.W+p.beta.*abs(x).^2).*x./(1i);
+           % y=(p.W+p.beta.*abs(x).^2).*x./(1i);  %cubic
+            y=(p.W+p.beta.*abs(x).^2/(1+abs(x).^2))*x./(1i); % SATURABLE
         end
     end
 end

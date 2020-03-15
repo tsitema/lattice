@@ -1,7 +1,7 @@
 include
 clear
-psweep=(0.02:0.05:3); %pump
-msweep= 0:0.05:4; %MMMMM
+psweep=1.95%(0.05:0.05:3); %pump
+msweep=3.1%0:0.05:4; %MMMMM
 asweep=0;%alpha
 edgepump=1;
 timelimit=1000;
@@ -30,8 +30,8 @@ for cnt=1:repeat
         end
         for i=1:length(psweep)
             fprintf('%d of %d\n',i,length(psweep));
-          parfor (j=1:length(msweep),parforArg)
-    %         for (j=1:length(msweep))
+    %      parfor (j=1:length(msweep),parforArg)
+             for (j=1:length(msweep))
                 pump1=psweep(i);
                 %% PARAMETERS*************************************************
                 %pump1=S.pump1;
@@ -137,7 +137,7 @@ for cnt=1:repeat
         %save data
         
     elseif strcmp(checkfor,'steady')
-        surf(msweep,psweep,(log(abs(result))))
+        surf(msweep,psweep,((abs(result))))
         xlabel('M')
         ylabel('\gamma')
         shading interp

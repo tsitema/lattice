@@ -6,16 +6,16 @@ classdef Visual
             plot(graph(abs(H.*(1-eye(size(H))))))
         end
         %PLOTS GRAPH OF NODE NETWORK
-        function pl=showNodes(nodes, plotHandle)
-            shownodenumbers=false;
-            if isa(nodes,'Node')==1
-                nodes=nodes(:);%flatten
-            elseif isa(nodes,'Lattice')==1
-                nodes=nodes.nodes(:);
+        function pl=showNodes(lattice, plotHandle)
+            shownodenumbers=true;
+            if isa(lattice,'Node')==1
+                nodes=lattice(:);%flatten
+            elseif isa(lattice,'Lattice')==1
+                nodes=lattice.nodes(:);
             else
-                warning('shownodes: not a Node or Lattice')
+                warning('showNodes: not a Node or Lattice')
             end
-            A=Solver.calcadj(nodes);
+            A=Solver.calcadj(lattice);
             gr=graph(abs(A.*(1-eye(size(A)))));
             xps=[nodes.x];
             yps=[nodes.y];
@@ -171,7 +171,7 @@ classdef Visual
             end
             %fft of the field intensity
             fft0=fft(fieldint);
-            fft0=abs((fft0));
+            fft0=abs((fft0)).^2;
             [~,freq]=max(fft0);
             amp=mean(abs(field).^2);
             error=(sum(fft0)-amp)/amp;

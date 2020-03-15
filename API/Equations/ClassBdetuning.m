@@ -1,4 +1,4 @@
-%ClassB with detuning, M
+%ClassB laser equations with detuning, M
 classdef ClassBdetuning <Eqn
     properties 
         %parameters with default values
@@ -23,10 +23,10 @@ classdef ClassBdetuning <Eqn
             o.options=o.option_list;
         end
         %linear part of the equation. It may be useful calculating the
-        %spectrum
-        function er=getlinear(o)                
-                er= (1-1i.*o.par.alpha).*o.par.pump-o.par.loss-1i.*o.par.M;
-        end
+%         %spectrum
+%         function er=getlinear(o)                
+%                 er= (1-1i.*o.par.alpha).*o.par.pump-o.par.loss-1i.*o.par.M;
+%         end
         function init=get.initial(o)
             init=o.initial;
             if strcmp(o.options.custom.Init_E,'random')
@@ -35,6 +35,7 @@ classdef ClassBdetuning <Eqn
             if strcmp(o.options.custom.Init_N,'steady')
                 init.N=o.par.pump.*o.par.tr;
             end
+            init.E=o.initE*rand();
         end
        end
     methods (Static)
@@ -55,6 +56,9 @@ classdef ClassBdetuning <Eqn
             col2=(p.pump-N-(1+2.*N).*abs(E).^2)./p.tr;
             %now, interleave the fields again.
             y=[col1,col2];
+        end
+        function er=getlinear(par)                
+                er= (1-1i.*par.alpha).*par.pump-par.loss-1i.*par.M;
         end
     end
 end

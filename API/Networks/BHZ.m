@@ -18,7 +18,8 @@ classdef BHZ < Lattice
         leftedge=3;%label for the left edge. we will apply custom initial conditions on these
         %default option object
         option_list=Options('initialpulse',{'none','leftedge'}...
-            ,'pulseintensity',0);
+            ,'pulseintensity',0 ...
+            ,'BC',{'default','periodic','periodicX','periodicY'});
     end
     
     %% METHODS
@@ -94,10 +95,28 @@ classdef BHZ < Lattice
                     %turn off random initial conditions for this node
                     o.nodes(1,yi,A).eqn.options.custom.Init_psi='default';
                     o.nodes(1,yi,A).eqn.initial.psi=o.options.custom.pulseintensity;%assign the new value
-                    o.nodes(1,yi,A).type='c';
+                    o.nodes(1,yi,A).type='c';%this is just a label 
                 end
             end
-            
+            %OPTION for periodic BC
+            if strcmp(o.options.custom.BC,'periodic')||strcmp(o.options.custom.BC,'periodicX')
+                for yi=1:NY
+                        %links between same orbital types
+                        Node.attach(o.nodes(NX,yi,A),o.nodes(1,yi,A),o.JB);
+                        Node.attach(o.nodes(NX,yi,B),o.nodes(1,yi,B),-o.JB);
+                        %links between different orbital types
+                        Node.attach(o.nodes(NX,yi,B),o.nodes(1,yi,A),-o.JA);
+                        Node.attach(o.nodes(NX,yi,A),o.nodes(1,yi,B),o.JA);
+                end
+            end
+            if strcmp(o.options.custom.BC,'periodic')||strcmp(o.options.custom.BC,'periodicY')
+                for xi=1:NX
+                    Node.attach(o.nodes(xi,NY,A),o.nodes(xi,1,A),o.JB);
+                    Node.attach(o.nodes(xi,NY,B),o.nodes(xi,1,B),-o.JB);
+                    Node.attach(o.nodes(xi,NY,A),o.nodes(xi,1,B),-1i*o.JA);
+                    Node.attach(o.nodes(xi,NY,B),o.nodes(xi,1,A),-1i*o.JA);
+                end
+            end
             %% TODO the code below (init position and cleanup) must be called after building the lattice
             % otherwise plots do not work properly. Either fix plots or move this code to the Lattice
             % superclass.
@@ -128,6 +147,8 @@ classdef BHZ < Lattice
                         else
                             disp('unidentified node')
                         end
+                        %o.nodes(i,j,k).x=o.nodes(i,j,k).x+rand()*0.1;
+                        %o.nodes(i,j,k).y=o.nodes(i,j,k).y+rand()*0.1;
                     end
                 end
             end

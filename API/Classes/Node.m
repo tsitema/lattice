@@ -46,13 +46,29 @@ classdef Node <handle
                 N=N+nodes(i).eqn.DOF;
             end
         end
-        function attach(node1,node2,str)
+        function [link1,link2]=attach(node1,node2,str)
+            %we handle the behaviour of the link here.
+            %str can be a number, or a string, 
+            
             %links two nodes, str should be the coupling strength from
             %node1 to node2, conjugate is calculated
-            link1=Link(node2,str);
-            link2=Link(node1,conj(str));%conjugate
-            node1.link(link1);
-            node2.link(link2);%conjugate
+            if isnumeric(str)
+                link1=Link(node2,str);
+                link2=Link(node1,conj(str));%conjugate
+                link2.isConjugate=true;%mark the conjugate flag
+                node1.link(link1);
+                node2.link(link2);%conjugate
+            elseif isstring(str)||ischar(str)
+                link1=Link(node2,str);
+                link2=Link(node1,str);%conjugate
+                link2.isConjugate=true;%mark the conjugate flag
+                link1.isConjugate=false;
+                node1.link(link1);
+                node2.link(link2);%conjugate
+            else
+                warning('Invalid coupling strength, has to be a number or string');
+            end
+                
         end
         function detach(node1, node2)
             node1.unlink(node2);
@@ -72,6 +88,58 @@ classdef Node <handle
             nodes=nodes(:);
             for i=1:length(nodes)
                 nodes(i).ID=i;
+            end
+        end
+        function nodes=cleanup(nodes)
+            nodes=Node.deleteEmpty(nodes);
+            nodes=Node.renumber(nodes);
+        end
+        %detach the given node and mark ID=0 so you can remove it from
+        %your list
+        function deleteNodes(nodes)
+            nodes=nodes(:);
+            for i=1:length(nodes)
+                snode=nodes(i);
+                length(snode.linklist)
+                for j=1:length(snode.linklist)
+                    slink=snode.linklist(1);
+                    Node.detach(snode,slink.node);
+                end
+                snode.ID=0;
+            end
+        end
+        %returns true if two nodes are linked
+        function result=islinked(node1,node2)
+            result=false;
+            for i=1:length(node1.linklist)
+                slink=node1.linklist(i);
+                if slink.node.ID==node2.ID
+                    result= true;
+                    return
+                end
+            end
+            %double check for asymmetric links
+            for i=1:length(node2.linklist)
+                slink=node2.linklist(i);
+                if slink.node.ID==node1.ID
+                    result= true;
+                    disp('Found asymmetric links');
+                    return
+                end
+            end
+        end
+        function lattice=move(lattice,x,y)
+            if isa(lattice,'Node')==1
+                nodes=lattice(:);%flatten
+            elseif isa(lattice,'Lattice')==1
+                nodes=lattice.nodes(:);
+            else
+                warning('calctime: not a Node or Lattice')
+            end
+            for i=1:length(nodes)
+                snode=nodes(i);
+                snode.x=snode.x+x;
+                snode.y=snode.y+y;
             end
         end
     end

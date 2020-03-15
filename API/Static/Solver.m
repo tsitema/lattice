@@ -2,14 +2,22 @@
 classdef Solver
     methods (Static)
        %calculates the linear hamilltonian
-        function H=calch(nodes)
-            %this function calculates the linear Hamiltonian, it takes an array of
-            %nodes.
-            nodes=nodes(:);%flatten
+        function H=calch(lattice)
+            if isa(lattice,'Node')==1
+                nodes=lattice(:);%flatten
+            elseif isa(lattice,'Lattice')==1
+                nodes=lattice.nodes(:);
+                try
+                    par=lattice.par;
+                    haspar=true;
+                catch
+                    haspar=false;
+                end
+            end
             %***!!!!!!!DIVIDED BY 2**********/////////
             N=Node.calcN(nodes)/2;
             H=sparse(N,N);
-            %state=ones(length(allnodes(:))*eqn.DOF,1);%state vector
+            %% state=ones(length(allnodes(:))*eqn.DOF,1);%state vector
             %go through all nodes
             for i=1:length(nodes)
                 snode=nodes(i);%selected node
@@ -18,8 +26,17 @@ classdef Solver
                 sDOF=1;
                 %*******OVERRIDE DOF**********************
                 di=(1:sDOF)+(i-1)*sDOF;%related region of the node in Hamiltonian
+                
+                %% Evaluate non-numeric equation parameters using lattice parameters
+                eqpar=snode.eqn.par;
+                fn = fieldnames(eqpar);
+                for k=1:numel(fn)
+                    if ~isnumeric(eqpar.(fn{k}))
+                        eqpar.(fn{k})=lattice.par.(eqpar.(fn{k}));
+                    end
+                end
                 %set the diagonal terms
-                H(di,di)=snode.eqn.getlinear;
+                H(di,di)=snode.eqn.getlinear(eqpar);
                 %Now, the links. 
                 for j=1:length(snode.linklist)
                     slink=snode.linklist(j);%selected connected link
@@ -27,7 +44,26 @@ classdef Solver
                     hrow=(sDOF*(snode.ID-1)+1);%row is ID of the 1st
                     hcol=(sDOF*(sID-1)+1);%column of the connected
                     if sID>0 %check for unlinked
-                        H(hrow,hcol)=1i.*slink.str;
+                        if isnumeric(slink.str)
+                            %TODO: fix the warning here
+                            H(hrow,hcol)=1i.*slink.str;
+                        else
+                            %if str is a symbol, it is stored in the
+                            %lattice.par
+                            if haspar
+                                if isfield(par,slink.str)
+                                    if slink.isConjugate
+                                        H(hrow,hcol)=1i.*conj(par.(slink.str));
+                                    else
+                                        H(hrow,hcol)=1i.*par.(slink.str);
+                                    end
+                                else
+                                    error(strcat('No such parameter: ',slink.(str)));
+                                end
+                            else
+                                error('Lattice object has no parameters');
+                            end
+                        end
                     end
                 end
             end
@@ -60,12 +96,44 @@ classdef Solver
                 end
             end
         end
-       %calculates the adjacency matrix
-       function A=calcadj(nodes)
+       %calculates the adjacency matrix assuming strength=1 for all links
+       function A=calcadj_no_strength(nodes)
             if isa(nodes,'Node')==1
                 nodes=nodes(:);%flatten
             elseif isa(nodes,'Lattice')==1
                 par=nodes.par;
+                nodes=nodes.nodes(:);
+            else
+                warning('calceig: not a Node or Lattice')
+            end
+            nodes=nodes(:);%flatten
+            N=length(nodes);
+            A=sparse(N,N);
+            for i=1:length(nodes)
+                snode=nodes(i);%selected node
+                for j=1:length(snode.linklist)
+                    slink=snode.linklist(j);%selected connected link
+                    sID=slink.node.ID;%ID of the connected node
+                    hrow=snode.ID;%row is ID of the 1st
+                    hcol=sID;%column of the connected
+                    if sID>0 %check for unlinked
+                            %TODO: fix the warning here
+                            A(hrow,hcol)=1;
+                    end
+                end
+            end
+       end
+ % calculates the adjacency matrix
+      function A=calcadj(nodes)
+            if isa(nodes,'Node')==1
+                nodes=nodes(:);%flatten
+            elseif isa(nodes,'Lattice')==1
+                try
+                    par=nodes.par;
+                    haspar=true;
+                catch
+                    haspar=false;
+                end
                 nodes=nodes.nodes(:);
             else
                 warning('calceig: not a Node or Lattice')
@@ -87,9 +155,13 @@ classdef Solver
                         else
                             %if str is a symbol, it is stored in the
                             %lattice.par
-                            if exist('par','var')
+                            if haspar
                                 if isfield(par,slink.str)
-                                    A(hrow,hcol)=par.slink.str;
+                                    if slink.isConjugate
+                                        A(hrow,hcol)=conj(par.(slink.str));
+                                    else
+                                        A(hrow,hcol)=par.(slink.str);
+                                    end
                                 else
                                     error(strcat('No such parameter: ',slink.(str)));
                                 end
@@ -101,7 +173,7 @@ classdef Solver
                 end
             end
         end
-        
+ 
         %Give me a lattice or array of nodes, i will give you the
         %EigenSystem. EigenSystem is a container class that contains
         %nodes, eigenvalues and eigenvectors
@@ -152,7 +224,7 @@ classdef Solver
             sln.fields=y;
             sln.time=t;
         end
-        %evaluate ode system, but with small chunks, and save to disc
+        %evaluate ode system, but with small chunks, and save to disk
         function sln=calctime2(nodes,timelimit)
             timestep=10;
             interp_step=0.1;
@@ -204,6 +276,18 @@ classdef Solver
             sln.initial=init;
             sln.fields=datafile.yi;
             sln.time=datafile.ti;
+        end
+        function calcbloch(lattice,kx,ky)
+            %test if has primitive vectors
+            if isprop(lattice,'primitiveVectors')
+                overlap=lattice.getOverlappingNodes();
+            else
+                error('Lattice do not have primitive vectors')
+            end
+            nodes=lattice.nodes();
+            unitcell=lattice.getUnitCell();
+            adjacency=calc_adj(nodes);
+            %keep the unitcell matrix
         end
         
         %used by calctime

@@ -53,7 +53,6 @@ classdef (Abstract) Eqn
             end
         end
         
-        
     end
     methods (Static, Abstract)
        %  function y=calc(x,p)

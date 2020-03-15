@@ -44,21 +44,20 @@ classdef Analyze
             tmax=soln.time(end);
             timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
             field=soln.fields(:,:,sfield);
-            if snode==0
-                field=sum(field,2);%sum through nodes
-            else
-                field=field(:,snode);
-            end
             [~,nn]=size(field);
+            
             fieldint=zeros(ntime,nn);  
+            PN=0;
             for i=1:nn
                 fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
+                %fft of the field intensity
+                fft0=abs(fft(fieldint(:,i)));
+                %normalize
+                fft0=fft0.^2./sum(abs(fft0.^2));
+                PN=PN+sum(abs(fft0).^2);
             end
-            %fft of the field intensity
-            fft0=abs(fft(fieldint));
-            %normalize spectrum
-            fft0=fft0.^2./sum(abs(fft0.^2));
-            PN=sum(abs(fft0).^2);%larger means more localized
+            PN=PN/nn;
+            %PN=sum(abs(fft0).^2);%larger means more localized
         end
         
         function merit=objfun(soln)

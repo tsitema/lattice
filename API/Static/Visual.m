@@ -139,6 +139,36 @@ classdef Visual
             field=abs(field).^2;
             plot(plotHandle,soln.time,field);
         end
+        function plotBands(lattice,plotHandle)
+            if nargin==1
+                plotHandle=gca;
+            end
+            %from gamma to X
+            ky1=0:pi/20:pi;
+            kx1=zeros(1,length(ky1));
+            %from M to K
+            kx2=0:pi/20:pi;
+            ky2=pi*ones(1,length(kx2));
+            %from K to gamma
+            kx3=pi:-pi/20:0;
+            ky3=kx3;
+            ky=[ky1 ky2 ky3];
+            kx=[kx1 kx2 kx3];
+            %sol=zeros(size(kx));
+            sol=[];
+            for i=1:length(kx)
+                H=Solver.calcBloch(lattice,kx(i),ky(i));
+                vals=eigs(H);
+                sol=[sol; vals(:)'];
+            end
+            
+            sol=real(sol);
+            sol=sort(sol,2);
+            plot(plotHandle,sol)
+            labels=['Γ';'X';'M';'Γ'];
+            positions=[0 ,length(ky1), (length(ky1)+length(ky2)), length(ky)];
+            set(plotHandle,'xtick',positions,'xticklabel',labels)
+        end
         function plotfft(soln,snode,plotHandle,options)
             %*****parameters**********************
             ntime=1001;%time steps

@@ -1,4 +1,4 @@
-classdef Node <handle
+classdef Node <  matlab.mixin.Copyable
     properties
         ID;% node IDs also supposed to determine the position in hamiltonian 
         %ID=0 means inactive/deleted node.
@@ -142,5 +142,25 @@ classdef Node <handle
                 snode.y=snode.y+y;
             end
         end
-    end
+        function nodes=duplicateNodes(nodes)
+            newnodes=copy(nodes);
+            %fix the link references of the nodes
+            IDs=[nodes.ID];
+            %for
+            %end
+        end
+     end
+%     methods(Access = protected)
+%       % Override copyElement method:
+%       function cpObj = copyElement(obj)
+%          % Make a shallow copy of all four properties
+%          cpObj = copyElement@matlab.mixin.Copyable(obj);
+%          % Make a deep copy of the DeepCp object
+%          try
+%             cpObj.linklist = copy(obj.linklist);
+%          catch
+%             %empty link list
+%          end
+%       end
+%    end
 end

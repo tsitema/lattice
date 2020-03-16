@@ -36,7 +36,7 @@ classdef Solver
                     end
                 end
                 %set the diagonal terms
-                H(di,di)=snode.eqn.getlinear(eqpar);
+                H(di,di)=snode.eqn.getlinear(eqpar)./1i;
                 %Now, the links. 
                 for j=1:length(snode.linklist)
                     slink=snode.linklist(j);%selected connected link
@@ -46,16 +46,20 @@ classdef Solver
                     if sID>0 %check for unlinked
                         if isnumeric(slink.str)
                             %TODO: fix the warning here
-                            H(hrow,hcol)=1i.*slink.str;
+                            H(hrow,hcol)=slink.str;
                         else
                             %if str is a symbol, it is stored in the
                             %lattice.par
                             if haspar
                                 if isfield(par,slink.str)
+                                    value=par.(slink.str);
+                                    if ~isnumeric(value)
+                                        value=str2double(value);
+                                    end
                                     if slink.isConjugate
-                                        H(hrow,hcol)=1i.*conj(par.(slink.str));
+                                        H(hrow,hcol)=conj(value);
                                     else
-                                        H(hrow,hcol)=1i.*par.(slink.str);
+                                        H(hrow,hcol)=value;
                                     end
                                 else
                                     error(strcat('No such parameter: ',slink.(str)));
@@ -277,19 +281,61 @@ classdef Solver
             sln.fields=datafile.yi;
             sln.time=datafile.ti;
         end
-        function calcbloch(lattice,kx,ky)
+        %calculates Bloch hamiltonian
+        function H=calcBloch(lattice,kx,ky)
             %test if has primitive vectors
             if isprop(lattice,'primitiveVectors')
                 overlap=lattice.getOverlappingNodes();
             else
                 error('Lattice do not have primitive vectors')
             end
+            H=Solver.calch(lattice);
             nodes=lattice.nodes();
             unitcell=lattice.getUnitCell();
-            adjacency=calc_adj(nodes);
+            %adjacency=Visual.calc_adj(nodes);
+            [vx,vy,vxy]=getOverlappingNodes(lattice);
+            %bloch links along x
+            [vr,vc]=find(vx);
+            for j=1:length(vr)
+                H(vc(j),:)=H(vc(j),:)+exp(1i*kx).*H(vr(j),:);
+                H(:,vc(j))=H(:,vc(j))+exp(-1i*kx).*H(:,vr(j));
+            end
+            %blochlinks along y
+            [vr,vc]=find(vy);
+            for j=1:length(vr)
+                H(vc(j),:)=H(vc(j),:)+exp(1i*ky).*H(vr(j),:);
+                H(:,vc(j))=H(:,vc(j))+exp(-1i*ky).*H(:,vr(j));
+            end
+            %blochlinks along x+y
+            [vr,vc]=find(vy);
+            for j=1:length(vr)
+                H(vc(j),:)=H(vc(j),:)+exp(1i*(ky+kx)).*H(vr(j),:);
+                H(:,vc(j))=H(:,vc(j))+exp(-1i*(ky+kx)).*H(:,vr(j));
+            end
+            %remove overlapped nodes
+            H=H([unitcell.ID],:);
+            H=H(:,[unitcell.ID]);
             %keep the unitcell matrix
         end
-        
+        function sol=calcBands(lattice)
+            ky1=0:pi/20:pi;
+            kx1=zeros(1,length(ky1));
+            %from M to K
+            kx2=0:pi/20:pi;
+            ky2=pi*ones(1,length(kx2));
+            %from K to gamma
+            kx3=pi:-pi/20:0;
+            ky3=kx3;
+            ky=[ky1 ky2 ky3];
+            kx=[kx1 kx2 kx3];
+            %sol=zeros(size(kx));
+            sol=[];
+            for i=1:length(kx)
+                H=Solver.calcBloch(lattice,kx(i),ky(i));
+                vals=eigs(H);
+                sol=[sol; vals(:)'];
+            end
+        end
         %used by calctime
 %         function res=odefcn(y,props,link)
 %             blank=zeros(length(link),1);

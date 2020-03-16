@@ -52,6 +52,24 @@ classdef LatticeInteractive < Lattice
             unitcell=~overlapped;
             nodes=lattice.nodes(unitcell);
         end
+        function lattice=toFinite(lattice,nx,ny)
+            nodes=lattice.nodes;
+            px=lattice.primitiveVectors(1,:);
+            py=lattice.primitiveVectors(2,:);
+            N=length(nodes);
+            for i=1:nx-1
+                newnodes=copy(nodes);
+                %Set new position of the nodes
+                for j=1:length(newnodes)
+                    newnodes(i).x= newnodes(i).x+px(1);
+                    newnodes(i).y= newnodes(i).y+px(2);
+                end
+                nodes=[nodes; newnodes];
+            end
+            lattice.nodes=Node.renumber(nodes);
+        end
+        function lattice=copyNodes(lattice)
+        end
     end
         %% SET METHODS
 end

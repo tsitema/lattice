@@ -41,5 +41,16 @@ classdef Link
 %         function str=set.str(o,str)
 %             o.str=str;
 %         end
+
     end
+    methods(Access = protected)
+%       % Override copyElement method:
+%       function cpObj = copyElement(obj)
+% %          % Make a shallow copy of all four properties
+% %          cpObj = copyElement@matlab.mixin.Copyable(obj);
+% %          % Make a deep copy of the DeepCp object
+% %          cpObj.node = copy(obj.node);
+%            cpObj
+%       end
+   end
 end

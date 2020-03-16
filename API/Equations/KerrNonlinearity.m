@@ -25,14 +25,14 @@ classdef KerrNonlinearity <Eqn
             init.psi=1+rand()*o.random_intensity;  
             end
         end
-        function er=getlinear(o)                
-                er= o.par.W;
-        end
     end
     methods (Static)
         function y=calc(x,p)
             %y=(p.W+p.beta.*abs(x).^2).*x./(1i);  %cubic
            y=(p.W+p.beta.*abs(x).^2 ./(1+abs(x).^2)).*x./(1i); % SATURABLE
+        end
+        function er=getlinear(par)                
+                er= par.W;
         end
     end
 end

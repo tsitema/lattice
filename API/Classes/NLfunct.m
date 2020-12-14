@@ -36,11 +36,7 @@ classdef NLfunct
             fy=o.eqn.calc(x,o.props);
             %*****LINK********************
             %link only the first field.
-            fy(:,1)=fy(:,1)-(1i).*o.link*x(:,1);
-            %add inputs
-            
-            %add outputs
-            
+            fy(:,1)=fy(:,1)-(1i).*o.link*x(:,1);            
             fy=fy(:);
         end
     end

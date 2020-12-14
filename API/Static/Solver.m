@@ -14,8 +14,8 @@ classdef Solver
                     haspar=false;
                 end
             end
-            %***!!!!!!!DIVIDED BY 2**********/////////
-            N=Node.calcN(nodes)/2;
+            
+            N=length(nodes);
             H=sparse(N,N);
             %% state=ones(length(allnodes(:))*eqn.DOF,1);%state vector
             %go through all nodes
@@ -36,7 +36,7 @@ classdef Solver
                     end
                 end
                 %set the diagonal terms
-                H(di,di)=snode.eqn.getlinear(eqpar)./1i;
+                H(di,di)=snode.eqn.getlinear(eqpar).*1i;
                 %Now, the links. 
                 for j=1:length(snode.linklist)
                     slink=snode.linklist(j);%selected connected link
@@ -128,9 +128,10 @@ classdef Solver
             end
        end
  % calculates the adjacency matrix
-      function A=calcadj(nodes)
-            if isa(nodes,'Node')==1
+       function A=calcadj(nodes)
+          if isa(nodes,'Node')==1
                 nodes=nodes(:);%flatten
+                haspar=false;
             elseif isa(nodes,'Lattice')==1
                 try
                     par=nodes.par;
@@ -181,49 +182,66 @@ classdef Solver
         %Give me a lattice or array of nodes, i will give you the
         %EigenSystem. EigenSystem is a container class that contains
         %nodes, eigenvalues and eigenvectors
-        function esystem=calceig(nodes)
-            if isa(nodes,'Node')==1
-                nodes=nodes(:);%flatten
-            elseif isa(nodes,'Lattice')==1
-                nodes=nodes.nodes(:);
+        function esystem=calceig(lattice)
+            if isa(lattice,'Node')==1
+                nodes=lattice(:);%flatten
+            elseif isa(lattice,'Lattice')==1
+                nodes=lattice.nodes(:);
             else
                 warning('calceig: not a Node or Lattice')
             end
-            A=Solver.calch(nodes);
+            A=Solver.calch(lattice);
             A=full(A);
             [vectors,values]=eig(A);
             values=diag(values);
-            esystem=EigenSystem(nodes,values,vectors);
+            esystem=EigenSystem(lattice,values,vectors);
         end
         
         %Calculates the time evolution of the fields.
         %For now, we assume all nodes are the same class.
-        function sln=calctime(nodes,timelimit)
-%             if isa(nodes,'Node')==1
-%                 nodes=nodes(:);%flatten
-%             elseif isa(nodes,'Lattice')==1
-%                 nodes=nodes.nodes(:);
-%             else
-%                 warning('calctime: not a Node or Lattice')
-%             end
-            props=Eqn.getParArray(nodes);
+        function sln=calctime(lattice,timelimit)
+            opts = odeset('RelTol',1e-5,'AbsTol',1e-6,'NormControl','on');
+            props=Eqn.getParArray(lattice,lattice.par);
+                     
+            %convert properties to numeric
+            names=fieldnames(props);
+            for i=1:length(names)
+                sprop=props.(names{i});
+                for j=1:length(sprop)
+                   if ~isnumeric(sprop(j))
+                       %try to convert to number
+                       parsed=str2double(sprop(j));
+                       if isnan(parsed)
+                           try
+                                sprop(j)=lattice.par.(sprop(j));
+                           catch
+                                error(strcat('cannot find symbol: ',sprop(j)));
+                           end
+                       else
+                           sprop(j)=parsed;
+                       end
+                   end
+                end
+                props.(names{i})=sprop;
+            end
+            
             %initial state
             %TODO: MAKE IT CLASS INDEPENDENT
-            if isa(nodes,'Node')==1
-                eq=nodes(1).eqn;
-            elseif isa(nodes,'Lattice')==1
-                n1=nodes.nodes(1);
+            if isa(lattice,'Node')==1
+                eq=lattice(1).eqn;
+            elseif isa(lattice,'Lattice')==1
+                n1=lattice.nodes(1);
                 eq=n1.eqn;
             end
             %initial values. each column is another field
-            init=Eqn.getInit(nodes);
-            link=Solver.calcadj(nodes);
+            init=Eqn.getInit(lattice);
+            link=Solver.calcadj(lattice);
             nlfunct=NLfunct(props,link,eq);
             %assuming the link is only for the first field!
-            [t,y] = ode45(@nlfunct.y, [0 timelimit],init);
+            [t,y] = ode45(@nlfunct.y, [0 timelimit],init,opts);
             %now form the Solution object and return it.
             y=reshape(y,[],nlfunct.N,nlfunct.DOF);
-            sln=Solution(nodes);
+            sln=Solution(lattice);
             sln.initial=init;
             sln.fields=y;
             sln.time=t;

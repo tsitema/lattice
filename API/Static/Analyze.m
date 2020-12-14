@@ -3,14 +3,17 @@ classdef Analyze
         function [amp,freq,error]=getfrequency(soln)
             %returns the most prominent frequency
             %*****parameters**********************
-            ntime=2000;%time steps
+            ntime=1000;%time steps
             steady=0.5;%choose between 0-1 to specify steady state time
             snode=0;%selected node, if==0 calculate average of nodes
             sfield=1;%selected field
             %*****parameters END******************
             %interpolate
             tmax=soln.time(end);
-            timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
+            timestep=(1-steady)*tmax/(ntime-1);
+            Fs=1/timestep;
+            f = Fs*(0:(ntime-1))/ntime;
+            times=tmax*steady:timestep:tmax;
             field=soln.fields(:,:,sfield);
             if snode==0
                 field=sum(field,2);%sum through nodes
@@ -20,16 +23,51 @@ classdef Analyze
             [~,nn]=size(field);
             fieldint=zeros(ntime,nn);  
             for i=1:nn
-                fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
+                fieldint(:,i)=interp1(soln.time,field(:,i),times);
             end
             %fft of the field intensity
-            fft0=fft(abs(fieldint).^2);
-            fft0=abs(fft0);
-            [~,freq]=max(fft0);
+            fft0=abs(fft(fieldint)).^2;
+            [~,freq_index]=max(fft0);
+            freq=f(freq_index);
             amp=mean(abs(field).^2);
             error=(sum(fft0)-amp)/amp;
         end
         
+        function [freq]=getfrequencyall(soln)
+            %*****parameters**********************
+            ntime=5001;%time steps
+            %FFT is calculated for time interval steady*tmax:tmax
+            steady=0.5;%choose between 0-1 to specify steady state time
+            sfield=1;%selected field
+            %*****parameters END******************
+            %interpolate
+            tmax=soln.time(end);
+            fs=tmax*steady/ntime;%sampling frequency
+            timesteps=tmax*steady:(1-steady)*tmax/(ntime-1):tmax;
+            field=soln.fields(:,:,sfield);
+            [~,nn]=size(field);
+            fieldint=zeros(ntime,nn);  
+            for i=1:nn
+                fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
+            end
+            %fft of the field intensity
+            fft0=fft(fieldint);
+            fft0=abs((fft0)).^2;
+            [~,freq]=max(fft0);
+            amp=mean(abs(field).^2);
+            error=(sum(fft0)-amp)/amp;
+            [xmax,ymax]=size(fft0);
+            markersize=5;
+            Fs=1/((1-steady)*tmax/(ntime-1));
+            freqrange= Fs*[-ntime/2:(ntime/2-1)];
+            f = Fs/2*linspace(0,1,ntime/2+1);
+            f=[-flip(f(2:end)) f];
+            %repmat(1:xmax,[1 ymax])
+            fft0=fftshift(fft0);
+            fft0=abs(fft0);
+            [~,freq]=max(fft0);
+            freq=f(freq);
+        end
         function [PN]=getfreqPN(soln)
             %returns the participation number of the fft spectrum
             %of a given solution starting from 0.5*timelimit
@@ -128,6 +166,35 @@ classdef Analyze
             sfield=1;
             signal=soln.fields(end,:,sfield);
             res=sum(abs(signal(edges)))/sum(abs(signal));
+        end
+    
+        function [ft,f]=calcfft(soln)
+            %returns the most prominent frequency
+            %*****parameters**********************
+            ntime=1000;%time steps
+            steady=0.5;%choose between 0-1 to specify steady state time
+            snode=0;%selected node, if==0 calculate average of nodes
+            sfield=1;%selected field
+            %*****parameters END******************
+            %interpolate
+            tmax=soln.time(end);
+            timestep=(1-steady)*tmax/(ntime-1);
+            Fs=1/timestep;
+            f = Fs*(-(ntime/2):(ntime/2-1))/ntime;
+            times=tmax*steady:timestep:tmax;
+            field=soln.fields(:,:,sfield);
+            if snode==0
+                field=sum(field,2);%sum through nodes
+            else
+                field=field(:,snode);
+            end
+            [~,nn]=size(field);
+            fieldint=zeros(ntime,nn);
+            for i=1:nn
+                fieldint(:,i)=interp1(soln.time,field(:,i),times);
+            end
+            %fft of the field intensity
+            ft=abs(fftshift(fft(fftshift(fieldint)))).^2;
         end
     end
 end

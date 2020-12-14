@@ -2,13 +2,15 @@
 classdef ClassBdetuning <Eqn
     properties 
         %parameters with default values
-        par=struct('loss',1,'alpha',0,'sigma',1,'pump',0,'tr',100,'M',0);
+        %ext: external coupling coefficient
+        %
+        par=struct('loss',0.1,'alpha',0,'input',0,'pump',0,'tr',100,'M',0,'ext',0);
         fields=struct('E',[],'N',[]);
         initial=struct('E',0,'N',1);
         options;
-        input;%function handle for input
-        output;%function handle for input
-        initE=1e-3;%intensity of the initial random electric field
+        %input;%function handle for input
+        %ext;%external coupling loss
+        initE=1e-6;%intensity of the initial random electric field
     end
     properties (Constant)
         DOF=2;%internal degrees of freedom for each node.
@@ -52,13 +54,13 @@ classdef ClassBdetuning <Eqn
             %col1=(0.5.*((-1./p.tph)+p.sigma.*(x(:,2)-1)).*(1i-p.alpha).*x(:,1)).*(-1i)+1i*p.M.*x(:,1);
             %col2=p.pump-x(:,2)./p.tr -2.*(x(:,2)-1).*(abs(x(:,1)).^2)./p.tr;
             %From Longhi mitigation of dynamical...
-            col1=(1-1i.*p.alpha).*N.*E-(p.loss-1i.*p.M).*E;
+            col1=(1-1i.*p.alpha).*N.*E-(p.loss-1i.*p.M+p.ext).*E+sqrt(2*p.ext).*p.input;
             col2=(p.pump-N-(1+2.*N).*abs(E).^2)./p.tr;
             %now, interleave the fields again.
             y=[col1,col2];
         end
         function er=getlinear(par)                
-                er= (1-1i.*par.alpha).*par.pump-par.loss-1i.*par.M;
+                er= (1-1i.*par.alpha).*par.pump-par.loss-1i.*par.M+1i.*par.input;
         end
     end
 end

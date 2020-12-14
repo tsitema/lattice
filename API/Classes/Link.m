@@ -1,4 +1,4 @@
-classdef Link 
+classdef Link %<  matlab.mixin.Copyable
     properties
     node% the node the link is pointing.
     str%Link/coupling strength, hopping constant

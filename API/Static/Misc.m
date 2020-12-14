@@ -8,6 +8,16 @@ classdef Misc
                 soa.(sprop)=[aos.(sprop)]';
             end
         end
+        function props=fill_pars(props,par)
+            names=fieldnames(props);
+            for i=1:length(props)
+                for j=1:length(names)
+                    if ~isnumeric(props(i).(names{j}))
+                    props(i).(names{j})=par.(props(i).(names{j}));
+                    end
+                end
+            end
+        end
         %noise function
         function fcn=noise(longpass)
             samples=1000;

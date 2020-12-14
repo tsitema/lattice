@@ -1,0 +1,46 @@
+include
+clear
+n=10;%Lattice width=height
+g=10;%Nonlinearity
+init=0;%default initial value
+T=2;%floquet period
+N_steps=100;%Floquet steps
+J=pi;%default value
+plotsteps=2;
+
+%% %%%%%%%%%TIME DEPENDENT%%%%%%%%%%%%%%%%%%%%%%%%
+%Create 4 lattice for each Floquet season
+for season=1:4
+    lat(season)=Floquet([n n],g,[0 0 ],J,init,season,'finite');
+    H(:,:,season)=full(Solver.calch(lat(season)));
+end
+% FIND EIGENVECTORS
+U1 = expm(-1i*H(:,:,1)*T/4);
+U2 = expm(-1i*H(:,:,2)*T/4);
+U3 = expm(-1i*H(:,:,3)*T/4);
+U4 = expm(-1i*H(:,:,4)*T/4);
+
+%Propagator
+U = U4*U3*U2*U1;
+
+%%eigenvalues
+[EV,E] = eig(U);
+E=diag(E);
+%sort
+[egreal,I]=sort(real(1i*1/T*log(E)),'ascend');
+EV=EV(:,I);
+egimag=imag(1i*1/T*log(E(I)));
+
+% PLOT
+figure(1);
+scatter(imag(E(I)),real(E(I))); xlabel('imag(E)');ylabel('real(E)');
+% 
+%PLOT ALL EIGENMODES
+esystem.values=E;
+esystem.vectors=EV;
+esystem.nodes=lat(1);
+for ii=1:length(E)
+    figure(2);
+    Visual.plotEig(esystem,ii)
+    pause(0.1);
+end

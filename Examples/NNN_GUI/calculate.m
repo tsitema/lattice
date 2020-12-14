@@ -16,24 +16,33 @@ function [egs,lattice]=calculate(pump1,M,loss,alpha,tr,edgepump,bulkedgeratio)
             %tr=0.1;%should be larger than 1
             sigma=24;
             %threshold=(1/tr)*(1/(tph*sigma)+1);
-            eqna=ClassBdetuning();
-            eqna.par.M=M;%detuning
+            %% Initialize Class B model
+%             eqna=ClassBdetuning();
+%             eqna.par.M=M;%detuning
+%             eqna.par.loss=loss;
+%             eqna.par.alpha=alpha;
+%             eqna.par.sigma=sigma;%
+%             eqna.par.pump=pump2;%
+%             eqna.par.tr=tr;%
+%             eqna.options.custom.Init_E='random';
+%             eqna.options.custom.Init_N='steady';
+%             eqna.initE=1;
+%             eqnb=eqna;
+%             eqnb.par.pump=pump1;
+%             if edgepump==0
+%                 %now, we make one site lossless, the other gainless
+%                 eqnb.par.loss=0;
+%                 eqna.par.pump=0;
+%             end
+%             eqnb.par.M=-M;
+%% Initialize Class A model
+            eqna=ClassA();
             eqna.par.loss=loss;
-            eqna.par.alpha=alpha;
-            eqna.par.sigma=sigma;%
-            eqna.par.pump=pump2;%
-            eqna.par.tr=tr;%
-            eqna.options.custom.Init_E='random';
-            eqna.options.custom.Init_N='steady';
-            eqna.initE=1;
+            eqna.par.pump=pump1;%
+            eqna.par.M=M;%detuning
             eqnb=eqna;
-            eqnb.par.pump=pump1;
-            if edgepump==0
-                %now, we make one site lossless, the other gainless
-                eqnb.par.loss=0;
-                eqna.par.pump=0;
-            end
             eqnb.par.M=-M;
+            
             %% CREATE LATTICE***********************************************
             option=NNN.option_list;%get default option object
             option.custom.edges='baklava';%set edge option

@@ -1,13 +1,13 @@
 include
 clear
-psweep=1.95%(0.05:0.05:3); %pump
-msweep=3.1%0:0.05:4; %MMMMM
+psweep=1%(0.05:0.02:2.5); %pump
+msweep=1%0.05:0.02:4; %MMMMM
 asweep=0;%alpha
 edgepump=1;
 timelimit=1000;
-%checkfor='highestgain';
+checkfor='highestgain';
 %checkfor='steady';
-checkfor='freq';
+%checkfor='c4';
 %checkfor='edginess';
 enableplot=false;
 runInSerial = enableplot;% disable/enable parallel
@@ -30,14 +30,14 @@ for cnt=1:repeat
         end
         for i=1:length(psweep)
             fprintf('%d of %d\n',i,length(psweep));
-    %      parfor (j=1:length(msweep),parforArg)
-             for (j=1:length(msweep))
+        %    parfor (j=1:length(msweep),parforArg)
+            for (j=1:length(msweep))
                 pump1=psweep(i);
                 %% PARAMETERS*************************************************
                 %pump1=S.pump1;
                 M=msweep(j);
                 if edgepump==1
-                    pump2=pump1;
+                    pump2=pump1
                     loss=0.1;%pump1*0.05;%(44/224);
                 else
                     pump2=0;
@@ -72,9 +72,9 @@ for cnt=1:repeat
                 option=NNN.option_list;%get default option object
                 option.custom.edges='baklava';%set edge option
                 if edgepump==1
-                    option.custom.pump='edge'%pump edges only
+                    option.custom.pump='edge';%pump edges only
                 end
-                option.custom.BC='periodic1';
+                %option.custom.BC='periodic';
                 option.custom.pump='edge';%pump edges only
                 lattice=NNN(eqna,eqnb,12,12,option);
                 lattice.J=J;
@@ -82,16 +82,17 @@ for cnt=1:repeat
                 if strcmp(checkfor,'highestgain')
                     egs=Solver.calceig(lattice);
                     %visualization methods
-                    [m,in]=max(real(egs.values));
+                    [m,in]=max(imag(egs.values));
                     modepower(i,j)=Analyze.modepower(egs,in);
                     modeimag(i,j)=imag(egs.values(in));
-                    %          Visual.plotEig(egs,in);
-                    %               pause(0.1);
-                    %hold on
+                                                  
+scatter(imag(egs.values),real(egs.values))
+                                                        pause(0.1);
+                    %                     hold on
                 elseif strcmp(checkfor,'steady')
                     soln=Solver.calctime(lattice,timelimit);
                     if enableplot
-                    Visual.graphTimeAmp(soln);
+                        Visual.graphTimeAmp(soln);
                     end
                     [re,result(i,j),~]=Analyze.checksteady(soln);
                 elseif strcmp(checkfor,'freq')
@@ -105,10 +106,9 @@ for cnt=1:repeat
                     soln=Solver.calctime(lattice,timelimit);
                     result(i,j) =Analyze.edginess(soln);
                     if enableplot
-                    Visual.graphTimeAmp(soln);
+                        Visual.graphTimeAmp(soln);
                     end
                 end
-         
             end
         end
         if strcmp(checkfor,'steady')

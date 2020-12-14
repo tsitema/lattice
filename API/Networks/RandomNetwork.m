@@ -5,7 +5,7 @@ classdef RandomNetwork < Lattice
         size;%network size
         maxlink;%maximum number of link per node
         maxJ=1;%max coupling constant
-        nodes=Node.empty();
+        %nodes=Node.empty();
         options;%currently selected options
         eqn;
     end

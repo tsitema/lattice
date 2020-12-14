@@ -7,7 +7,7 @@ classdef Visual
         end
         %PLOTS GRAPH OF NODE NETWORK
         function pl=showNodes(lattice, plotHandle)
-            shownodenumbers=true;
+            shownodenumbers=false;
             if isa(lattice,'Node')==1
                 nodes=lattice(:);%flatten
             elseif isa(lattice,'Lattice')==1
@@ -47,12 +47,20 @@ classdef Visual
         end
         
         %plots nth eigenvector
-        function plotEig(eigensystem, n, plotHandle)
+        function plotEig(eigensystem, n, plotHandle)                
+            if isa(eigensystem.nodes,'Node')==1
+                nodes=eigensystem.nodes(:);%flatten
+            elseif isa(eigensystem.nodes,'Lattice')==1
+                nodes=eigensystem.nodes.nodes(:);
+            else
+                warning('showNodes: not a Node or Lattice')
+            end
             if n<=length(eigensystem.values)||n<1
                 if nargin>2
-                    pl=Visual.showNodes(eigensystem.nodes', plotHandle);
+                    pl=Visual.showNodes(eigensystem.nodes, plotHandle);
                 else
-                    pl=Visual.showNodes(eigensystem.nodes');
+                    pl=Visual.showNodes(eigensystem.nodes);
+                    plotHandle=gca;
                 end
                 vector=abs(eigensystem.vectors(:,n));
                 minv=min(vector);
@@ -61,17 +69,25 @@ classdef Visual
                 ncolor=50;
                 cmap=cool(ncolor);
                 scaled=floor((ncolor-1)*(vector-minv)/(maxv-minv)+1);
-                for i=1:length(eigensystem.nodes)
-                    highlight(pl,eigensystem.nodes(i).ID,'NodeColor',cmap(scaled(i),:));
+                for i=1:length(nodes)
+                    highlight(pl,nodes(i).ID,'NodeColor',cmap(scaled(i),:));
                 end
                %TEXT 
-               text(plotHandle,0,0,strcat('t= ',num2str(n),'eig= ',num2str(eigensystem.values(n))));
+               text(plotHandle,0,0,strcat('Index= ',num2str(n),'eig= ',num2str(eigensystem.values(n))));
             else
                 warning('plotEigen: invalid Eigenvector index');
             end
         end
         %This function plays an animation of the time evolution of the fields
         function graphTimeAmp(soln, tstart, tend, ntime, plotHandle)
+            lattice=soln.lattice;
+            if isa(lattice,'Node')==1
+                lattice=lattice(:);%flatten
+            elseif isa(lattice,'Lattice')==1
+                lattice=lattice.nodes(:);
+            else
+                warning('showNodes: not a Node or Lattice')
+            end            
             %******PARAMETERS********
             ncolor=50;%number of colors
             sfield=1;%# of selected field
@@ -79,7 +95,7 @@ classdef Visual
             if nargin==1
                 tstart=0;
                 tend=soln.time(end);
-                ntime=200;%number of time steps
+                ntime=100;%number of time steps
                 plotHandle=gca;
             elseif nargin>=3
                 %ok
@@ -99,8 +115,8 @@ classdef Visual
             else
                 timesteps=tstart;
             end
-            fieldint=zeros(ntime,length(soln.lattice));
-            for i=1:length(soln.lattice)
+            fieldint=zeros(ntime,length(lattice));
+            for i=1:length(lattice)
                 fieldint(:,i)=interp1(soln.time,field(:,i),timesteps);
             end
             %scale fields
@@ -111,7 +127,7 @@ classdef Visual
                     scaled(sc,:)=floor((ncolor-1)*(fieldint(sc,:)-minv(sc))./(maxv(sc)-minv(sc))+1);
                 else
                     %if field is constant
-                    scaled(sc,:)=ones(1,length(soln.lattice));
+                    scaled(sc,:)=ones(1,length(lattice));
                 end
             end
             %colormap
@@ -120,8 +136,8 @@ classdef Visual
             for i=1:ntime
                 curtime=scaled(i,:);
                 %scaled=floor((ncolor-1)*(fieldint-min(fieldint))/(max(curtime)-min(curtime))+1);
-                for j=1:length(soln.lattice)
-                    highlight(pl,soln.lattice(j).ID,'NodeColor',cmap(curtime(j),:));
+                for j=1:length(lattice)
+                    highlight(pl,lattice(j).ID,'NodeColor',cmap(curtime(j),:));
                 end
                 xlabel(plotHandle,strcat('t= ',num2str(timesteps(i)),'  max E= ', num2str(maxv(i))));
                 %colorbar(plotHandle,cmap)
@@ -132,7 +148,7 @@ classdef Visual
             if nargin==1
                 plotHandle=gca;
             end
-            %pl=Visual.showNodes(soln.lattice);
+            %pl=Visual.showNodes(lattice);
             sfield=1;
             field=soln.fields(:,:,sfield);
             %absolute square
@@ -161,7 +177,6 @@ classdef Visual
                 vals=eigs(H);
                 sol=[sol; vals(:)'];
             end
-            
             sol=real(sol);
             sol=sort(sol,2);
             plot(plotHandle,sol)
@@ -171,7 +186,7 @@ classdef Visual
         end
         function plotfft(soln,snode,plotHandle,options)
             %*****parameters**********************
-            ntime=1001;%time steps
+            ntime=5001;%time steps
             %FFT is calculated for time interval steady*tmax:tmax
             steady=0.5;%choose between 0-1 to specify steady state time
             if nargin==1

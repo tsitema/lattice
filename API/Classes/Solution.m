@@ -12,7 +12,7 @@ classdef Solution
             if isa(lattice,'Node')==1
                 obj.lattice=lattice;
             elseif isa(lattice,'Lattice')==1
-                obj.lattice=lattice.nodes;
+                obj.lattice=lattice;
             end
             %obj.initial=getdefaultinit();
         end

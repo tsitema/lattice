@@ -28,8 +28,9 @@ classdef KerrNonlinearity <Eqn
     end
     methods (Static)
         function y=calc(x,p)
-            %y=(p.W+p.beta.*abs(x).^2).*x./(1i);  %cubic
-           y=(p.W+p.beta.*abs(x).^2 ./(1+abs(x).^2)).*x./(1i); % SATURABLE
+           y=(p.W+p.beta.*abs(x).^2).*x./(1i);  %cubic
+           
+           %y=(p.W+p.beta.*abs(x).^2 ./(1+abs(x).^2)).*x./(1i); % SATURABLE
         end
         function er=getlinear(par)                
                 er= par.W;

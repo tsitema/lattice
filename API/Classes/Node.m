@@ -67,8 +67,7 @@ classdef Node <  matlab.mixin.Copyable
                 node2.link(link2);%conjugate
             else
                 warning('Invalid coupling strength, has to be a number or string');
-            end
-                
+            end                
         end
         function detach(node1, node2)
             node1.unlink(node2);
@@ -142,16 +141,23 @@ classdef Node <  matlab.mixin.Copyable
                 snode.y=snode.y+y;
             end
         end
-        function nodes=duplicateNodes(nodes)
+        function newnodes=duplicateNodes(nodes)
             newnodes=copy(nodes);
             %fix the link references of the nodes
-            IDs=[nodes.ID];
-            %for
-            %end
+            IDs=[newnodes.ID];
+            for i=1:length(newnodes)
+                snode=newnodes(i);
+                for j=1:length(snode.linklist)
+                    slink=snode.linklist(j);
+                    index=[IDs==slink.node.ID]; 
+                    snode.linklist(j).node=newnodes(index);
+                end
+            end
+            nodes=newnodes;
         end
      end
-%     methods(Access = protected)
-%       % Override copyElement method:
+    methods(Access = protected)
+      % Override copyElement method:
 %       function cpObj = copyElement(obj)
 %          % Make a shallow copy of all four properties
 %          cpObj = copyElement@matlab.mixin.Copyable(obj);
@@ -162,5 +168,5 @@ classdef Node <  matlab.mixin.Copyable
 %             %empty link list
 %          end
 %       end
-%    end
+   end
 end

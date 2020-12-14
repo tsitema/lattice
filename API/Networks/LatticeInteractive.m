@@ -58,15 +58,15 @@ classdef LatticeInteractive < Lattice
             py=lattice.primitiveVectors(2,:);
             N=length(nodes);
             for i=1:nx-1
-                newnodes=copy(nodes);
+                newnodes=Node.duplicateNodes(nodes);
                 %Set new position of the nodes
                 for j=1:length(newnodes)
-                    newnodes(i).x= newnodes(i).x+px(1);
-                    newnodes(i).y= newnodes(i).y+px(2);
+                    newnodes(j).x= newnodes(j).x+px(1);
+                    newnodes(j).y= newnodes(j).y+px(2);
                 end
-                nodes=[nodes; newnodes];
             end
-            lattice.nodes=Node.renumber(nodes);
+            lattice.nodes=[nodes; newnodes];%
+            Node.renumber(lattice.nodes);
         end
         function lattice=copyNodes(lattice)
         end

@@ -17,7 +17,9 @@ classdef (Abstract) Eqn
         %but all elements of the equation array should be in the same
         %class.
         %it can take equation array, node array or lattice as input
-        function str=getParArray(eqnarr)
+        % it can also take a parameter array that contain numeric values
+        % for symbolic parameters.
+        function str=getParArray(eqnarr,param)
             if isa(eqnarr,'Eqn')==1
             elseif isa(eqnarr,'Node')==1
                 eqnarr=[eqnarr.eqn];
@@ -29,6 +31,9 @@ classdef (Abstract) Eqn
             end
             eqnarr=eqnarr(:);%flatten
             props=[eqnarr.par];
+            if nargin==2
+             props=Misc.fill_pars(props,param);
+            end
             str=Misc.aos2soa(props);
         end
         %TODO: Consider moving these static methods to Solver class
